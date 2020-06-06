@@ -30,6 +30,7 @@ type LeaseEntry struct {
 }
 
 type ReportEntry struct {
+	IP        string
 	Interface string
 	SSID      string
 	MAC       string
@@ -120,12 +121,14 @@ func RTLoop(c routeros.Client) {
 
 		leaseList.RLock()
 		for _, re := range reply.Re {
-			var n, c string
+			var n, c, ip string
 			if le, ok := FindLeaseByMAC(leaseList.List, re.Map["mac-address"]); ok {
 				n = le.Hostname
 				c = le.Comment
+				ip = le.IP
 			}
 			rec := ReportEntry{
+				IP:        ip,
 				Interface: re.Map["interface"],
 				SSID:      re.Map["ssid"],
 				MAC:       re.Map["mac-address"],

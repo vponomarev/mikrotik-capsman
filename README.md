@@ -7,6 +7,7 @@ UI contains:
 - CapsMan interface name
 - SSID
 - Client MAC address
+- Client IP address (from DHCP)
 - Signal strength level
 - Hostname (from DHCP)
 - Comment (from DHCP)
