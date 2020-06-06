@@ -14,7 +14,7 @@ var (
 	cmPass    = flag.String("password", "admin", "Password for CapsMan")
 
 	// DHCP Server configuration
-	dhcpAddr           = flag.String("dhcp-cmAddress", "192.168.1.1:8728", "Addr/port for DHCP Server")
+	dhcpAddr           = flag.String("dhcp-address", "192.168.1.1:8728", "Addr/port for DHCP Server")
 	dhcpName           = flag.String("dhcp-username", "admin", "Username for DHCP Server")
 	dhcpPass           = flag.String("dhcp-password", "admin", "Password for DHCP Server")
 	dhcpReloadInterval = flag.Duration("dhcp-reload-interval", 60*time.Second, "Interval for DHCP reload")
@@ -23,7 +23,7 @@ var (
 	listen = flag.String("listen", "0.0.0.0:8080", "HTTP Listen configuration")
 
 	// Polling interval
-	interval = flag.Duration("interval", 3*time.Second, "Interval")
+	interval = flag.Duration("interval", 3*time.Second, "CapsMan Polling Interval")
 )
 
 func main() {
