@@ -34,9 +34,9 @@ func serveHTTP() {
 
 	})
 
-	log.WithFields(log.Fields{"listen": *listen}).Fatal("Starting HTTP Listener")
+	log.WithFields(log.Fields{"listen": *listen}).Warn("Starting HTTP Listener")
 	err := http.ListenAndServe(*listen, nil)
-	log.WithFields(log.Fields{"listen": *listen}).Warn("Received an error from HTTP Listener: ", err)
+	log.WithFields(log.Fields{"listen": *listen}).Fatal("Received an error from HTTP Listener: ", err)
 }
 
 func WSreader(ws *websocket.Conn) {
