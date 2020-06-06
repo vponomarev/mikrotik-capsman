@@ -31,11 +31,13 @@
 <pre id="output"></pre>
 
 <script type="application/javascript">
-    let socket = new WebSocket("ws://127.0.0.1:8080/ws");
+function doConnectWS() {
+    let socket = new WebSocket("ws://{{.ServerHost}}/ws");
     let output = document.getElementById("output");
+    output.innerHTML = "Status: Connecting...\n";
 
-    socket.onopen = function() {
-        output.innerHTML += "Status: Connected\n";
+    socket.onopen = function () {
+        output.innerHTML = "Status: Connected\n" + output.innerHTML;
     }
     socket.onmessage = function (e) {
         msg = JSON.parse(e.data)
@@ -64,8 +66,16 @@
             if (lst.has(mac)) {
                 let v = lst.get(mac)
 
-                if ($(this).find("td:eq(3)").text() != v["Signal"])    {  $(this).find("td:eq(3)").text(v["Signal"]).css("background-color", "yellow")      } else {       $(this).find("td:eq(3)").css("background-color", "white")      }
-                if ($(this).find("td:eq(0)").text() != v["Interface"]) {  $(this).find("td:eq(0)").text(v["Interface"]).css("background-color", "yellow")   } else {       $(this).find("td:eq(0)").css("background-color", "white")      }
+                if ($(this).find("td:eq(3)").text() != v["Signal"]) {
+                    $(this).find("td:eq(3)").text(v["Signal"]).css("background-color", "yellow")
+                } else {
+                    $(this).find("td:eq(3)").css("background-color", "white")
+                }
+                if ($(this).find("td:eq(0)").text() != v["Interface"]) {
+                    $(this).find("td:eq(0)").text(v["Interface"]).css("background-color", "yellow")
+                } else {
+                    $(this).find("td:eq(0)").css("background-color", "white")
+                }
                 if ($(this).attr("setDelete") !== undefined) {
                     $(this).removeAttr("setDelete");
                     $(this).find("td:eq(0)").css("background-color", "white")
@@ -97,10 +107,15 @@
         // Delete expired lines
         $("#bodyData [doDelete=1]").remove();
     };
-    socket.onclose = function() {
+    socket.onclose = function () {
         output.innerHTML += "Status: DISCONNECTED\n";
-    }
 
+        // Reconnect in 5 sec
+        setTimeout(doConnectWS, 5000);
+    }
+}
+
+doConnectWS();
 </script>
 
 
