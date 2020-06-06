@@ -29,6 +29,7 @@ var (
 func main() {
 	flag.Parse()
 
+	log.SetLevel(log.DebugLevel)
 	log.Warning("Starting Mikrotik CapsMan monitor daemon")
 	//	log.WithFields(log.Fields{ "type": "smpp-lb",
 	//	}).Warning("Override LogLevel to: ", l.String())

@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/routeros.v2"
@@ -94,7 +93,7 @@ func reloadDHCP() {
 				leaseList.RLock()
 				leaseList.List = l
 				leaseList.RUnlock()
-				fmt.Println("DHCP Lease reloaded")
+				log.WithFields(log.Fields{"count": len(l)}).Debug("Reloaded DHCP Leases")
 			}
 
 		}
@@ -140,7 +139,7 @@ func RTLoop(c routeros.Client) {
 
 			// fmt.Printf("%-20s\t%-20s\t%-20s\t%-10s\t%-30s\t%-30s\n", re.Map["interface"], re.Map["ssid"], re.Map["mac-address"], re.Map["rx-signal"], n, c)
 		}
-		fmt.Println("Reloaded:", len(report), "entries")
+		log.WithFields(log.Fields{"count": len(report)}).Debug("Reloaded CapsMan entries")
 		leaseList.RUnlock()
 
 		output, err := json.Marshal(report)
