@@ -113,7 +113,25 @@ func RTLoop(c routeros.Client) {
 	for {
 		reply, err := c.Run("/caps-man/registration-table/print")
 		if err != nil {
-			log.Fatal("Error fetching CapsMan data: ", err)
+			log.WithFields(log.Fields{"address": *cmAddress, "username": *cmName}).Error("Error during request to CapsMan server: ", err)
+
+			// Try to close connection
+			c.Close()
+
+			// Reconnect loop
+			for {
+				// Sleep for 5 sec
+				time.Sleep(5 * time.Second)
+				cNew, err := routeros.Dial(*cmAddress, *cmName, *cmPass)
+				if err != nil {
+					log.WithFields(log.Fields{"address": *cmAddress, "username": *cmName}).Error("Reconnect error to CapsMan server: ", err)
+					continue
+				}
+				c = *cNew
+				log.WithFields(log.Fields{"address": *cmAddress, "username": *cmName}).Warn("Reconnected to CapsMan server")
+				break
+			}
+			continue
 		}
 
 		var report []ReportEntry
