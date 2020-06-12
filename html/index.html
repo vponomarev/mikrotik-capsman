@@ -18,6 +18,7 @@
         <td>SSID</td>
         <td>MAC</td>
         <td>IP</td>
+        <td>Name</td>
         <td>Signal</td>
         <td>Hostname</td>
         <td>Comment</td>
@@ -67,10 +68,10 @@ function doConnectWS() {
             if (lst.has(mac)) {
                 let v = lst.get(mac)
 
-                if ($(this).find("td:eq(4)").text() != v["Signal"]) {
-                    $(this).find("td:eq(4)").text(v["Signal"]).css("background-color", "yellow")
+                if ($(this).find("td:eq(5)").text() != v["Signal"]) {
+                    $(this).find("td:eq(5)").text(v["Signal"]).css("background-color", "yellow")
                 } else {
-                    $(this).find("td:eq(4)").css("background-color", "white")
+                    $(this).find("td:eq(5)").css("background-color", "white")
                 }
                 if ($(this).find("td:eq(0)").text() != v["Interface"]) {
                     $(this).find("td:eq(0)").text(v["Interface"]).css("background-color", "yellow")
@@ -101,7 +102,7 @@ function doConnectWS() {
             let v = lst.get(e)
             if (v.DONE < 1) {
                 console.log(v);
-                $("#bodyData").append("<tr><td>" + v["Interface"] + "</td><td>" + v["SSID"] + "</td><td>" + v["MAC"] + "</td><td>" + v["IP"] + "</td><td>" + v["Signal"] + "</td><td>" + v["Hostname"] + "</td><td>" + v["Comment"] + "</td></tr>");
+                $("#bodyData").append("<tr><td>" + v["Interface"] + "</td><td>" + v["SSID"] + "</td><td>" + v["MAC"] + "</td><td>" + v["IP"] + "</td><td>" + v["Name"] + "</td><td>" + v["Signal"] + "</td><td>" + v["Hostname"] + "</td><td>" + v["Comment"] + "</td></tr>");
             }
         }
 

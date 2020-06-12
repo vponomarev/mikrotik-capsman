@@ -2,8 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/routeros.v2"
+	"os"
 	"time"
 )
 
@@ -24,9 +26,20 @@ var (
 
 	// Polling interval
 	interval = flag.Duration("interval", 3*time.Second, "CapsMan Polling Interval")
+
+	// Optional configuration file
+	configFileName = flag.String("config", "", "Configuration file name")
 )
 
 func main() {
+	// Check for `--help` param
+	if len(os.Args) > 1 {
+		if os.Args[1] == "--help" {
+			usage()
+			return
+		}
+	}
+
 	flag.Parse()
 
 	log.SetLevel(log.DebugLevel)
@@ -34,7 +47,16 @@ func main() {
 	//	log.WithFields(log.Fields{ "type": "smpp-lb",
 	//	}).Warning("Override LogLevel to: ", l.String())
 
-	// TODO: Add reconnect to CapsMAN in case of any failure
+	// Load config if specified
+	if *configFileName != "" {
+		c, err := loadConfig(*configFileName)
+		if err != nil {
+			log.WithFields(log.Fields{"config": *configFileName}).Fatal("Error loading config file")
+		}
+		log.WithFields(log.Fields{"config": *configFileName}).Warn("Loaded config file")
+		config = c
+	}
+	fmt.Println(config)
 
 	l, err := GetDHCPLeases(*dhcpAddr, *dhcpName, *dhcpPass)
 	if err != nil {
@@ -57,5 +79,5 @@ func main() {
 	go reloadDHCP()
 
 	// Run loop : scan Registration-Table
-	RTLoop(*c)
+	RTLoop(*c, &config)
 }

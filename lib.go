@@ -2,9 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/routeros.v2"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"strings"
 	"sync"
 	"time"
 )
@@ -30,6 +34,7 @@ type LeaseEntry struct {
 
 type ReportEntry struct {
 	IP        string
+	Name      string
 	Interface string
 	SSID      string
 	MAC       string
@@ -54,8 +59,28 @@ type LeaseList struct {
 	sync.RWMutex
 }
 
+type ConfMikrotik struct {
+	Address  string `yaml:"address"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+}
+
+type ConfDevice struct {
+	Name string `yaml:"name"`
+	MAC  string `yaml:"mac"`
+}
+
+type Config struct {
+	Capsman ConfMikrotik `yaml:"capsman"`
+	DHCP    ConfMikrotik `yaml:"dhcp"`
+	Devices []ConfDevice `yaml:"devices"`
+	sync.RWMutex
+}
+
 var broadcastData BroadcastData
 var leaseList LeaseList
+var config Config
+var devNames map[string]string
 
 func GetDHCPLeases(address, username, password string) (list []LeaseEntry, err error) {
 	cl, err := routeros.Dial(address, username, password)
@@ -109,7 +134,7 @@ func FindLeaseByMAC(list []LeaseEntry, mac string) (e LeaseEntry, ok bool) {
 	return
 }
 
-func RTLoop(c routeros.Client) {
+func RTLoop(c routeros.Client, conf *Config) {
 	for {
 		reply, err := c.Run("/caps-man/registration-table/print")
 		if err != nil {
@@ -146,6 +171,7 @@ func RTLoop(c routeros.Client) {
 			}
 			rec := ReportEntry{
 				IP:        ip,
+				Name:      devNames[re.Map["mac-address"]],
 				Interface: re.Map["interface"],
 				SSID:      re.Map["ssid"],
 				MAC:       re.Map["mac-address"],
@@ -175,4 +201,30 @@ func RTLoop(c routeros.Client) {
 
 		time.Sleep(*interval)
 	}
+}
+
+func loadConfig(configFileName string) (config Config, err error) {
+	config = Config{}
+	devNames = make(map[string]string)
+
+	source, err := ioutil.ReadFile(configFileName)
+	if err != nil {
+		err = fmt.Errorf("cannot read config file [%s]", configFileName)
+		return
+	}
+
+	if err = yaml.Unmarshal(source, &config); err != nil {
+		err = fmt.Errorf("error parsing config file [%s]: %v", configFileName, err)
+		return
+	}
+
+	for _, v := range config.Devices {
+		devNames[strings.ToUpper(v.MAC)] = v.Name
+	}
+
+	return
+}
+
+func usage() {
+
 }

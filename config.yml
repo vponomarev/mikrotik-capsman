@@ -1,0 +1,20 @@
+# Mikrotik CapsMan connection parameters
+capsman:
+  address: "192.168.1.1:8728"
+  username: "admin"
+  password: ""
+
+# Mikrotik DHCP server connection parameters
+dhcp:
+  address: "192.168.1.1:8728"
+  username: "admin"
+  password: ""
+
+# Configuration file for MAC => DeviceName Name mapping
+devices:
+  - name: "Device 01"
+    mac: "5C:C0:70:A1:00:00"
+  - name: "Device 02"
+    mac: "5C:C0:70:A2:00:00"
+  - name: "Device 03"
+    mac: "5C:C0:70:A3:00:00"
