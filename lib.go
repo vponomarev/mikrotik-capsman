@@ -60,9 +60,10 @@ type LeaseList struct {
 }
 
 type ConfMikrotik struct {
-	Address  string `yaml:"address"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
+	Address  string        `yaml:"address"`
+	Username string        `yaml:"username"`
+	Password string        `yaml:"password"`
+	Interval time.Duration `yaml:"interval"`
 }
 
 type ConfDevice struct {
@@ -107,11 +108,11 @@ func GetDHCPLeases(address, username, password string) (list []LeaseEntry, err e
 }
 
 func reloadDHCP() {
-	ticker := time.NewTicker(*dhcpReloadInterval)
+	ticker := time.NewTicker(config.DHCP.Interval)
 	for {
 		select {
 		case <-ticker.C:
-			l, err := GetDHCPLeases(*dhcpAddr, *dhcpName, *dhcpPass)
+			l, err := GetDHCPLeases(config.DHCP.Address, config.DHCP.Username, config.DHCP.Password)
 			if err != nil {
 				log.Fatal("Cannot connect to DHCP Server for reload: ", err)
 			} else {
@@ -138,7 +139,7 @@ func RTLoop(c routeros.Client, conf *Config) {
 	for {
 		reply, err := c.Run("/caps-man/registration-table/print")
 		if err != nil {
-			log.WithFields(log.Fields{"address": *cmAddress, "username": *cmName}).Error("Error during request to CapsMan server: ", err)
+			log.WithFields(log.Fields{"address": config.Capsman.Address, "username": config.Capsman.Username}).Error("Error during request to CapsMan server: ", err)
 
 			// Try to close connection
 			c.Close()
@@ -147,13 +148,13 @@ func RTLoop(c routeros.Client, conf *Config) {
 			for {
 				// Sleep for 5 sec
 				time.Sleep(5 * time.Second)
-				cNew, err := routeros.Dial(*cmAddress, *cmName, *cmPass)
+				cNew, err := routeros.Dial(config.Capsman.Address, config.Capsman.Username, config.Capsman.Password)
 				if err != nil {
-					log.WithFields(log.Fields{"address": *cmAddress, "username": *cmName}).Error("Reconnect error to CapsMan server: ", err)
+					log.WithFields(log.Fields{"address": config.Capsman.Address, "username": config.Capsman.Username}).Error("Reconnect error to CapsMan server: ", err)
 					continue
 				}
 				c = *cNew
-				log.WithFields(log.Fields{"address": *cmAddress, "username": *cmName}).Warn("Reconnected to CapsMan server")
+				log.WithFields(log.Fields{"address": config.Capsman.Address, "username": config.Capsman.Username}).Warn("Reconnected to CapsMan server")
 				break
 			}
 			continue
