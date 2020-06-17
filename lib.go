@@ -67,8 +67,19 @@ type ConfMikrotik struct {
 }
 
 type ConfDevice struct {
-	Name string `yaml:"name"`
-	MAC  string `yaml:"mac"`
+	Name         string      `yaml:"name"`
+	MAC          string      `yaml:"mac"`
+	OnConnect    ConfigEvent `yaml:"on.connect"`
+	OnDisconnect ConfigEvent `yaml:"on.disconnect"`
+	OnRoaming    ConfigEvent `yaml:"on.roaming"`
+	OnLevel      ConfigEvent `yaml:"on.level"`
+}
+
+type ConfigEvent struct {
+	HttpPost        string            `yaml:"http.post"`
+	HttpGet         string            `yaml:"http.get"`
+	HttpPostContent string            `yaml:"http.post.content"`
+	HttpHeader      map[string]string `yaml:"http.header"`
 }
 
 type Config struct {
@@ -187,17 +198,22 @@ func RTLoop(c routeros.Client, conf *Config) {
 		log.WithFields(log.Fields{"count": len(report)}).Debug("Reloaded CapsMan entries")
 		leaseList.RUnlock()
 
-		output, err := json.Marshal(report)
-		if err != nil {
-			log.Fatal("Error JSON MARSHAL: ", err)
-			return
+		if err = reportUpdate(report); err != nil {
+			log.WithFields(log.Fields{}).Warn("Error during reportUpdate: ", err)
+
 		}
+		/*
+			output, err := json.Marshal(report)
+			if err != nil {
+				log.Fatal("Error JSON MARSHAL: ", err)
+				return
+			}
 
-		broadcastData.RLock()
-		broadcastData.Data = string(output)
-		broadcastData.LastUpdate = time.Now()
-		broadcastData.RUnlock()
-
+			broadcastData.RLock()
+			broadcastData.Data = string(output)
+			broadcastData.LastUpdate = time.Now()
+			broadcastData.RUnlock()
+		*/
 		//		fmt.Print("\n")
 
 		time.Sleep(*interval)
@@ -228,4 +244,19 @@ func loadConfig(configFileName string) (config Config, err error) {
 
 func usage() {
 
+}
+
+// Handle report update request
+func reportUpdate(report []ReportEntry) error {
+	output, err := json.Marshal(report)
+	if err != nil {
+		return err
+	}
+
+	broadcastData.RLock()
+	broadcastData.Data = string(output)
+	broadcastData.LastUpdate = time.Now()
+	broadcastData.RUnlock()
+
+	return nil
 }
