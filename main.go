@@ -42,6 +42,12 @@ func main() {
 		log.WithFields(log.Fields{"config": *configFileName}).Fatal("Error loading config file")
 	}
 
+	// Switch log level if required
+	if cfg.Log.Level != log.DebugLevel {
+		log.WithFields(log.Fields{"loglevel": cfg.Log.Level}).Warn("Switching Log Level")
+		log.SetLevel(cfg.Log.Level)
+	}
+
 	// Validate reload interval duration
 	if cfg.Capsman.Interval < (2 * time.Second) {
 		log.WithFields(log.Fields{"config": *configFileName}).Fatal("capsman.interval is too short, minimum value is 2 sec")

@@ -1,3 +1,7 @@
+# Logging configuration
+log:
+  level: INFO
+
 # Mikrotik CapsMan connection parameters
 capsman:
   address: "192.168.1.1:8728"

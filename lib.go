@@ -84,7 +84,12 @@ type ConfigEvent struct {
 	HttpHeader      map[string]string `yaml:"http.header"`
 }
 
+type LogInfo struct {
+	Level log.Level `yaml:"level"`
+}
+
 type Config struct {
+	Log     LogInfo      `yaml:"log"`
 	Capsman ConfMikrotik `yaml:"capsman"`
 	DHCP    ConfMikrotik `yaml:"dhcp"`
 	Devices []ConfDevice `yaml:"devices"`
@@ -261,11 +266,16 @@ func (b *BroadcastData) reportUpdate(report []ReportEntry) error {
 	for k := range rm {
 		if _, ok := b.ReportMap[k]; !ok {
 			// New entry
-			fmt.Println("New entry:", k, ", connected to:", rm[k].Interface)
+			log.WithFields(log.Fields{"action": "register", "mac": k, "name": rm[k].Name, "interface": rm[k].Interface, "ssid": rm[k].SSID, "hostname": rm[k].Hostname, "comment": rm[k].Comment, "level-to": rm[k].Signal}).Info("New connection registered")
 		} else {
 			// Check for roaming
 			if rm[k].Interface != b.ReportMap[k].Interface {
-				fmt.Println("[", k, "] roaming [", b.ReportMap[k].Interface, "] => [", rm[k].Interface, "]")
+				log.WithFields(log.Fields{"action": "roaming", "mac": k, "name": rm[k].Name, "interface-from": b.ReportMap[k].Interface, "interface-to": rm[k].Interface}).Info("Client roaming")
+			}
+
+			// Check for signal level change
+			if rm[k].Signal != b.ReportMap[k].Signal {
+				log.WithFields(log.Fields{"action": "level", "mac": k, "name": rm[k].Name, "interface": rm[k].Interface, "level-from": b.ReportMap[k].Signal, "level-to": rm[k].Signal}).Debug("Signal level change")
 			}
 		}
 	}
@@ -273,7 +283,7 @@ func (b *BroadcastData) reportUpdate(report []ReportEntry) error {
 	// Scan for deleted entries
 	for k := range b.ReportMap {
 		if _, ok := rm[k]; !ok {
-			fmt.Println("Removed entry:", k, ", disconnected from:", b.ReportMap[k].Interface)
+			log.WithFields(log.Fields{"action": "disconnect", "mac": k, "name": b.ReportMap[k].Name, "interface": b.ReportMap[k].Interface}).Info("Client disconnect")
 		}
 	}
 
