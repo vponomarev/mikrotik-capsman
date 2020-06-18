@@ -28,6 +28,9 @@ func main() {
 		}
 	}
 
+	// Init broadcast data
+	broadcastData.Init()
+
 	flag.Parse()
 
 	log.SetLevel(log.DebugLevel)

@@ -49,6 +49,8 @@ var WS = websocket.Upgrader{
 }
 
 type BroadcastData struct {
+	Report     []ReportEntry
+	ReportMap  map[string]ReportEntry
 	Data       string
 	LastUpdate time.Time
 	sync.RWMutex
@@ -87,6 +89,11 @@ type Config struct {
 	DHCP    ConfMikrotik `yaml:"dhcp"`
 	Devices []ConfDevice `yaml:"devices"`
 	sync.RWMutex
+}
+
+// Init BroadcastData entry
+func (b *BroadcastData) Init() {
+	b.ReportMap = map[string]ReportEntry{}
 }
 
 var broadcastData BroadcastData
@@ -198,23 +205,10 @@ func RTLoop(c routeros.Client, conf *Config) {
 		log.WithFields(log.Fields{"count": len(report)}).Debug("Reloaded CapsMan entries")
 		leaseList.RUnlock()
 
-		if err = reportUpdate(report); err != nil {
+		if err = broadcastData.reportUpdate(report); err != nil {
 			log.WithFields(log.Fields{}).Warn("Error during reportUpdate: ", err)
 
 		}
-		/*
-			output, err := json.Marshal(report)
-			if err != nil {
-				log.Fatal("Error JSON MARSHAL: ", err)
-				return
-			}
-
-			broadcastData.RLock()
-			broadcastData.Data = string(output)
-			broadcastData.LastUpdate = time.Now()
-			broadcastData.RUnlock()
-		*/
-		//		fmt.Print("\n")
 
 		time.Sleep(*interval)
 	}
@@ -247,16 +241,46 @@ func usage() {
 }
 
 // Handle report update request
-func reportUpdate(report []ReportEntry) error {
+func (b *BroadcastData) reportUpdate(report []ReportEntry) error {
 	output, err := json.Marshal(report)
 	if err != nil {
 		return err
 	}
 
-	broadcastData.RLock()
-	broadcastData.Data = string(output)
-	broadcastData.LastUpdate = time.Now()
-	broadcastData.RUnlock()
+	// Lock mutex
+	b.RLock()
+	defer b.RUnlock()
+
+	// Prepare new list of entries
+	rm := map[string]ReportEntry{}
+	for _, v := range report {
+		rm[v.MAC] = v
+	}
+
+	// Scan for new entries
+	for k := range rm {
+		if _, ok := b.ReportMap[k]; !ok {
+			// New entry
+			fmt.Println("New entry:", k, ", connected to:", rm[k].Interface)
+		} else {
+			// Check for roaming
+			if rm[k].Interface != b.ReportMap[k].Interface {
+				fmt.Println("[", k, "] roaming [", b.ReportMap[k].Interface, "] => [", rm[k].Interface, "]")
+			}
+		}
+	}
+
+	// Scan for deleted entries
+	for k := range b.ReportMap {
+		if _, ok := rm[k]; !ok {
+			fmt.Println("Removed entry:", k, ", disconnected from:", b.ReportMap[k].Interface)
+		}
+	}
+
+	b.ReportMap = rm
+	b.Report = report
+	b.Data = string(output)
+	b.LastUpdate = time.Now()
 
 	return nil
 }
