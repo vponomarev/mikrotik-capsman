@@ -270,7 +270,7 @@ func (b *BroadcastData) reportUpdate(report []ReportEntry) error {
 		} else {
 			// Check for roaming
 			if rm[k].Interface != b.ReportMap[k].Interface {
-				log.WithFields(log.Fields{"action": "roaming", "mac": k, "name": rm[k].Name, "interface-from": b.ReportMap[k].Interface, "interface-to": rm[k].Interface}).Info("Client roaming")
+				log.WithFields(log.Fields{"action": "roaming", "mac": k, "name": rm[k].Name, "interface-from": b.ReportMap[k].Interface, "interface-to": rm[k].Interface, "level-from": b.ReportMap[k].Signal, "level-to": rm[k].Signal}).Info("Client roaming")
 			}
 
 			// Check for signal level change
