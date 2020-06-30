@@ -24,6 +24,13 @@ const (
 	writeWait = 10 * time.Second
 )
 
+const (
+	EVENT_CONNECT = iota
+	EVENT_ROAMING
+	EVENT_DISCONNECT
+	EVENT_LEVEL
+)
+
 type LeaseEntry struct {
 	IP       string
 	MAC      string
@@ -43,6 +50,12 @@ type ReportEntry struct {
 	Comment   string
 }
 
+type ReportEvent struct {
+	EventType int
+	Old       ReportEntry
+	New       ReportEntry
+}
+
 var WS = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -54,6 +67,8 @@ type BroadcastData struct {
 	Data       string
 	LastUpdate time.Time
 	sync.RWMutex
+
+	ReportChan chan ReportEvent
 }
 
 type LeaseList struct {
@@ -99,6 +114,7 @@ type Config struct {
 // Init BroadcastData entry
 func (b *BroadcastData) Init() {
 	b.ReportMap = map[string]ReportEntry{}
+	b.ReportChan = make(chan ReportEvent)
 }
 
 var broadcastData BroadcastData
@@ -266,16 +282,27 @@ func (b *BroadcastData) reportUpdate(report []ReportEntry) error {
 	for k := range rm {
 		if _, ok := b.ReportMap[k]; !ok {
 			// New entry
-			log.WithFields(log.Fields{"action": "register", "mac": k, "name": rm[k].Name, "interface": rm[k].Interface, "ssid": rm[k].SSID, "hostname": rm[k].Hostname, "comment": rm[k].Comment, "level-to": rm[k].Signal}).Info("New connection registered")
+			b.ReportChan <- ReportEvent{
+				EventType: EVENT_CONNECT,
+				New:       rm[k],
+			}
 		} else {
 			// Check for roaming
 			if rm[k].Interface != b.ReportMap[k].Interface {
-				log.WithFields(log.Fields{"action": "roaming", "mac": k, "name": rm[k].Name, "interface-from": b.ReportMap[k].Interface, "interface-to": rm[k].Interface, "level-from": b.ReportMap[k].Signal, "level-to": rm[k].Signal}).Info("Client roaming")
+				b.ReportChan <- ReportEvent{
+					EventType: EVENT_ROAMING,
+					Old:       b.ReportMap[k],
+					New:       rm[k],
+				}
 			}
 
 			// Check for signal level change
 			if rm[k].Signal != b.ReportMap[k].Signal {
-				log.WithFields(log.Fields{"action": "level", "mac": k, "name": rm[k].Name, "interface": rm[k].Interface, "level-from": b.ReportMap[k].Signal, "level-to": rm[k].Signal}).Debug("Signal level change")
+				b.ReportChan <- ReportEvent{
+					EventType: EVENT_LEVEL,
+					Old:       b.ReportMap[k],
+					New:       rm[k],
+				}
 			}
 		}
 	}
@@ -283,7 +310,10 @@ func (b *BroadcastData) reportUpdate(report []ReportEntry) error {
 	// Scan for deleted entries
 	for k := range b.ReportMap {
 		if _, ok := rm[k]; !ok {
-			log.WithFields(log.Fields{"action": "disconnect", "mac": k, "name": b.ReportMap[k].Name, "interface": b.ReportMap[k].Interface}).Info("Client disconnect")
+			b.ReportChan <- ReportEvent{
+				EventType: EVENT_DISCONNECT,
+				Old:       b.ReportMap[k],
+			}
 		}
 	}
 
@@ -293,4 +323,29 @@ func (b *BroadcastData) reportUpdate(report []ReportEntry) error {
 	b.LastUpdate = time.Now()
 
 	return nil
+}
+
+func (b *BroadcastData) EventHandler() {
+	for {
+		select {
+		case data := <-b.ReportChan:
+			// fmt.Printf("New event received: %v\n", data)
+			switch data.EventType {
+			case EVENT_CONNECT:
+				log.WithFields(log.Fields{"action": "register", "mac": data.New.MAC, "name": data.New.Name, "interface": data.New.Interface, "ssid": data.New.SSID, "hostname": data.New.Hostname, "comment": data.New.Comment, "level-to": data.New.Signal}).Info("New connection registered")
+
+			case EVENT_DISCONNECT:
+				log.WithFields(log.Fields{"action": "disconnect", "mac": data.Old.MAC, "name": data.Old.Name, "interface": data.Old.Interface, "hostname": data.Old.Hostname, "comment": data.Old.Comment}).Info("Client disconnect")
+
+			case EVENT_ROAMING:
+				log.WithFields(log.Fields{"action": "roaming", "mac": data.New.MAC, "name": data.New.Name, "interface-from": data.Old.Interface, "interface-to": data.New.Interface, "level-from": data.Old.Signal, "level-to": data.New.Signal}).Info("Client roaming")
+
+			case EVENT_LEVEL:
+				log.WithFields(log.Fields{"action": "level", "mac": data.New.MAC, "name": data.New.Name, "interface": data.New.Interface, "level-from": data.Old.Signal, "level-to": data.New.Signal}).Debug("Signal level change")
+
+			default:
+
+			}
+		}
+	}
 }

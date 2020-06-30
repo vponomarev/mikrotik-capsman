@@ -30,6 +30,7 @@ func main() {
 
 	// Init broadcast data
 	broadcastData.Init()
+	go broadcastData.EventHandler()
 
 	flag.Parse()
 
