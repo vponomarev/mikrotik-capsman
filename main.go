@@ -41,6 +41,7 @@ func main() {
 	cfg, err := loadConfig(*configFileName)
 	if err != nil {
 		log.WithFields(log.Fields{"config": *configFileName}).Fatal("Error loading config file")
+		return
 	}
 
 	// Switch log level if required
@@ -53,32 +54,37 @@ func main() {
 	if cfg.Capsman.Interval < (2 * time.Second) {
 		log.WithFields(log.Fields{"config": *configFileName}).Fatal("capsman.interval is too short, minimum value is 2 sec")
 	}
-	if cfg.DHCP.Interval < (10 * time.Second) {
+
+	if (len(cfg.DHCP.Address) > 0) && cfg.DHCP.Interval < (10*time.Second) {
 		log.WithFields(log.Fields{"config": *configFileName}).Fatal("dhcp.interval is too short, minimum value is 10 sec")
 	}
 
 	log.WithFields(log.Fields{"config": *configFileName}).Warn("Loaded config file")
 	config = cfg
 
-	l, err := GetDHCPLeases(config.DHCP.Address, config.DHCP.Username, config.DHCP.Password)
-	if err != nil {
-		log.WithFields(log.Fields{"dhcp-addr": config.DHCP.Address, "dhcp-username": config.DHCP.Username}).Fatal("Cannot connect to DHCP Server")
+	if len(cfg.DHCP.Address) > 0 {
+		l, err := GetDHCPLeases(config.DHCP.Address, config.DHCP.Username, config.DHCP.Password)
+		if err != nil {
+			log.WithFields(log.Fields{"dhcp-addr": config.DHCP.Address, "dhcp-username": config.DHCP.Username}).Fatal("Cannot connect to DHCP Server")
+		}
+
+		leaseList.RLock()
+		leaseList.List = l
+		leaseList.RUnlock()
+		log.WithFields(log.Fields{"dhcp-addr": config.DHCP.Address, "count": len(l)}).Info("Loaded DHCP Lease list")
+	} else {
+		log.WithFields(log.Fields{"dhcp-addr": config.DHCP.Address}).Warn("DHCP support is disabled in configuration")
 	}
-
-	leaseList.RLock()
-	leaseList.List = l
-	leaseList.RUnlock()
-
-	log.WithFields(log.Fields{"dhcp-addr": config.DHCP.Address, "count": len(l)}).Info("Loaded DHCP Lease list")
 
 	conn, err := routeros.Dial(config.Capsman.Address, config.Capsman.Username, config.Capsman.Password)
 	if err != nil {
 		log.WithFields(log.Fields{"address": config.Capsman.Address, "username": config.Capsman.Username}).Fatal("Cannot connect to CapsMan node")
+		return
 	}
 	log.WithFields(log.Fields{"address": config.Capsman.Address}).Info("Connected to CapsMan server")
 
 	go serveHTTP()
-	go reloadDHCP()
+	// go reloadDHCP()
 
 	// Run loop : scan Registration-Table
 	RTLoop(*conn, &config)
