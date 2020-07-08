@@ -24,30 +24,11 @@ jobs:
 
     - name: Get dependencies
       run: |
-        cd cmd/smpp-dump-client
         go get -v -t -d ./...
-        cd ../smpp-dumb-server
-        go get -v -t -d ./...
-        cd ../smpp-lb
-        go get -v -t -d ./...
-        cd ../..
-                
-    - name: Build
-      run: | 
-        cd cmd/smpp-dumb-client
-        go build -v .
-        cd ../smpp-dumb-server
-        go build -v .
-        cd ../smpp-lb
-        go build -v .
-        cd ../..
+        if [ -f Gopkg.toml ]; then
+            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+            dep ensure
+        fi
 
-    - name: Test
-      run: |
-        cd cmd/smpp-dumb-server
-        go test -v .
-        cd ../smpp-dumb-client
-        go test -v .
-        cd ../smpp-lb
-        go test -v .
-        cd ../..
+    - name: Build
+      run: go build -v .
