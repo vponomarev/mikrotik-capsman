@@ -1,0 +1,53 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.13
+      id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Get dependencies
+      run: |
+        cd cmd/smpp-dump-client
+        go get -v -t -d ./...
+        cd ../smpp-dumb-server
+        go get -v -t -d ./...
+        cd ../smpp-lb
+        go get -v -t -d ./...
+        cd ../..
+                
+    - name: Build
+      run: | 
+        cd cmd/smpp-dumb-client
+        go build -v .
+        cd ../smpp-dumb-server
+        go build -v .
+        cd ../smpp-lb
+        go build -v .
+        cd ../..
+
+    - name: Test
+      run: |
+        cd cmd/smpp-dumb-server
+        go test -v .
+        cd ../smpp-dumb-client
+        go test -v .
+        cd ../smpp-lb
+        go test -v .
+        cd ../..
