@@ -32,11 +32,12 @@ jobs:
 
     - name: Build
       run: |
-        go build -v .
+        mkdir out
+        go build -o out/mikrotik-capsman -v .
         ls -l
       
     - name: Upload binary
       uses: actions/upload-artifact@master
       with:
         name: linux
-        path: ./mikrotik-capsman
+        path: out
