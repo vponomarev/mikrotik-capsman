@@ -35,3 +35,8 @@ jobs:
         go build -v .
         ls -l
       
+    - name: Upload binary
+      uses: actions/upload-artifact@master
+      with:
+        name: linux
+        path: mikrotik-capsman
