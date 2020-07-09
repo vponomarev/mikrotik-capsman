@@ -34,7 +34,7 @@ jobs:
       run: |
         mkdir out
         cp config.yml out/
-        go build -o out/mikrotik-capsman -v .
+        GOARCH=arm go build -o out/mikrotik-capsman -v .
         ls -l
       
     - name: Upload binary
