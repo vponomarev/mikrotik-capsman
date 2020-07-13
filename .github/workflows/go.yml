@@ -32,13 +32,23 @@ jobs:
 
     - name: Build
       run: |
-        mkdir out
-        cp config.yml out/
-        go build -o out/mikrotik-capsman -v .
-        ls -l
+        mkdir out_x86-64
+        cp config.yml out_x86-64/
+        go build -o out_x86-64/mikrotik-capsman -v .
+        mkdir out_arm32
+        cp config.yml out_arm32/
+        GOARCH=arm go build -o out_arm32/mikrotik-capsman -v .
       
-    - name: Upload binary
+    - name: Upload binary x86-64
       uses: actions/upload-artifact@master
       with:
         name: linux_x86-64
-        path: out
+        path: out_x86-64
+
+    - name: Upload binary arm32
+      uses: actions/upload-artifact@master
+      with:
+        name: linux_arm32
+        path: out_arm32
+
+
