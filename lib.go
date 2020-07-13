@@ -347,11 +347,11 @@ func (b *BroadcastData) EventHandler() {
 				if ok {
 					if (len(dev.OnConnect.HttpPost) > 0) || (len(dev.OnConnect.HttpGet) > 0) {
 						go makeRequest(dev.OnConnect, map[string]string{
-							"name": dev.Name,
-							"roaming.to": "",
+							"name":         dev.Name,
+							"roaming.to":   "",
 							"roaming.from": "",
-							"level.to": data.New.Signal,
-							"level.from": "",
+							"level.to":     data.New.Signal,
+							"level.from":   "",
 						})
 					}
 				}
@@ -366,15 +366,14 @@ func (b *BroadcastData) EventHandler() {
 				if ok {
 					if (len(dev.OnDisconnect.HttpPost) > 0) || (len(dev.OnDisconnect.HttpGet) > 0) {
 						go makeRequest(dev.OnDisconnect, map[string]string{
-							"name": dev.Name,
-							"roaming.to": "",
+							"name":         dev.Name,
+							"roaming.to":   "",
 							"roaming.from": "",
-							"level.to": "",
-							"level.from": data.Old.Signal,
+							"level.to":     "",
+							"level.from":   data.Old.Signal,
 						})
 					}
 				}
-
 
 			case EVENT_ROAMING:
 				log.WithFields(log.Fields{"action": "roaming", "mac": data.New.MAC, "name": data.New.Name, "interface-from": data.Old.Interface, "interface-to": data.New.Interface, "level-from": data.Old.Signal, "level-to": data.New.Signal}).Info("Client roaming")
@@ -386,15 +385,14 @@ func (b *BroadcastData) EventHandler() {
 				if ok {
 					if (len(dev.OnRoaming.HttpPost) > 0) || (len(dev.OnRoaming.HttpGet) > 0) {
 						go makeRequest(dev.OnRoaming, map[string]string{
-							"name": dev.Name,
-							"roaming.to": data.New.Interface,
+							"name":         dev.Name,
+							"roaming.to":   data.New.Interface,
 							"roaming.from": data.Old.Interface,
-							"level.from": data.Old.Signal,
-							"level.to": data.New.Signal,
+							"level.from":   data.Old.Signal,
+							"level.to":     data.New.Signal,
 						})
 					}
 				}
-
 
 			case EVENT_LEVEL:
 				log.WithFields(log.Fields{"action": "level", "mac": data.New.MAC, "name": data.New.Name, "interface": data.New.Interface, "level-from": data.Old.Signal, "level-to": data.New.Signal}).Debug("Signal level change")
@@ -406,15 +404,14 @@ func (b *BroadcastData) EventHandler() {
 				if ok {
 					if (len(dev.OnLevel.HttpPost) > 0) || (len(dev.OnLevel.HttpGet) > 0) {
 						go makeRequest(dev.OnLevel, map[string]string{
-							"name": dev.Name,
-							"roaming.to": "",
+							"name":         dev.Name,
+							"roaming.to":   "",
 							"roaming.from": "",
-							"level.from": data.Old.Signal,
-							"level.to": data.New.Signal,
+							"level.from":   data.Old.Signal,
+							"level.to":     data.New.Signal,
 						})
 					}
 				}
-
 
 			default:
 
