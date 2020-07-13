@@ -25,3 +25,28 @@ devices:
     mac: "5C:C0:70:A2:00:00"
   - name: "Device 03"
     mac: "5C:C0:70:A3:00:00"
+    on.connect:
+      http.post: "http://127.0.0.1:8006/device/{name}/state"
+      http.post.content: "{ \"state\": \"connect\" }"
+      http.header:
+        "Authorization": "Bearer HereIsPassword"
+        "Content-Type": "application/json"
+    on.disconnect:
+      http.post: "http://127.0.0.1:8006/device/{name}/state"
+      http.post.content: "{ \"state\": \"disconnect\" }"
+      http.header:
+        "Authorization": "Bearer HereIsPassword"
+        "Content-Type": "application/json"
+    on.roaming:
+      http.post: "http://127.0.0.1:8006/device/{name}/AP"
+      http.post.content: "{ \"AP\": \"{roaming.to}\", \"AP_OLD\": \"{roaming.from}\" }"
+      http.header:
+        "Authorization": "Bearer HereIsPassword"
+        "Content-Type": "application/json"
+    on.level:
+      http.post: "http://127.0.0.1:8006/device/{name}/level"
+      http.post.content: "{ \"level\": \"{level.to}\" }"
+      http.header:
+        "Authorization": "Bearer HereIsPassword"
+        "Content-Type": "application/json"
+

@@ -5,7 +5,9 @@ import (
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"html/template"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -88,4 +90,46 @@ func WSwriter(ws *websocket.Conn) {
 			}
 		}
 	}
+}
+
+func makeRequest(event ConfigEvent, params map[string]string) {
+
+	// Prepare request params
+	method := "GET"
+	data := ""
+	url := event.HttpGet
+	if len(event.HttpPost) > 0 {
+		method = "POST"
+		url = event.HttpPost
+		data = event.HttpPostContent
+	}
+
+	for k, v := range params {
+		url = strings.ReplaceAll(url, "{"+k+"}", v)
+		data = strings.ReplaceAll(data, "{"+k+"}", v)
+	}
+
+	// Prepare request
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, strings.NewReader(data))
+	if err != nil {
+		log.WithFields(log.Fields{"action": "notify", "url": url}).Info("Error creating HTTP request: ", err)
+		return
+	}
+
+	// Add headers
+	for k, v := range event.HttpHeader {
+		req.Header.Add(k, v)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.WithFields(log.Fields{"action": "notify", "method": method, "url": url, "state": "fail"}).Info("Error making HTTP request: ", err)
+		return
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	// fmt.Printf("Resp body: %s", body)
+
+	log.WithFields(log.Fields{"action": "notify", "method": method, "url": url, "state": "ok", "resp-body-len": len(body)}).Debug("HTTP Notification is sent")
+
 }

@@ -120,7 +120,8 @@ func (b *BroadcastData) Init() {
 var broadcastData BroadcastData
 var leaseList LeaseList
 var config Config
-var devNames map[string]string
+var devList map[string]ConfDevice
+var devListMTX sync.RWMutex
 
 func GetDHCPLeases(address, username, password string) (list []LeaseEntry, err error) {
 	cl, err := routeros.Dial(address, username, password)
@@ -209,9 +210,10 @@ func RTLoop(c routeros.Client, conf *Config) {
 				c = le.Comment
 				ip = le.IP
 			}
+			devListMTX.RLock()
 			rec := ReportEntry{
 				IP:        ip,
-				Name:      devNames[re.Map["mac-address"]],
+				Name:      devList[re.Map["mac-address"]].Name,
 				Interface: re.Map["interface"],
 				SSID:      re.Map["ssid"],
 				MAC:       re.Map["mac-address"],
@@ -219,6 +221,7 @@ func RTLoop(c routeros.Client, conf *Config) {
 				Hostname:  n,
 				Comment:   c,
 			}
+			devListMTX.RUnlock()
 			report = append(report, rec)
 
 			// fmt.Printf("%-20s\t%-20s\t%-20s\t%-10s\t%-30s\t%-30s\n", re.Map["interface"], re.Map["ssid"], re.Map["mac-address"], re.Map["rx-signal"], n, c)
@@ -236,8 +239,11 @@ func RTLoop(c routeros.Client, conf *Config) {
 }
 
 func loadConfig(configFileName string) (config Config, err error) {
+	devListMTX.RLock()
+	defer devListMTX.RUnlock()
+
 	config = Config{}
-	devNames = make(map[string]string)
+	devList = make(map[string]ConfDevice)
 
 	source, err := ioutil.ReadFile(configFileName)
 	if err != nil {
@@ -251,7 +257,7 @@ func loadConfig(configFileName string) (config Config, err error) {
 	}
 
 	for _, v := range config.Devices {
-		devNames[strings.ToUpper(v.MAC)] = v.Name
+		devList[strings.ToUpper(v.MAC)] = v
 	}
 
 	return
@@ -334,14 +340,81 @@ func (b *BroadcastData) EventHandler() {
 			case EVENT_CONNECT:
 				log.WithFields(log.Fields{"action": "register", "mac": data.New.MAC, "name": data.New.Name, "interface": data.New.Interface, "ssid": data.New.SSID, "hostname": data.New.Hostname, "comment": data.New.Comment, "level-to": data.New.Signal}).Info("New connection registered")
 
+				// Get device info
+				devListMTX.RLock()
+				dev, ok := devList[data.New.MAC]
+				devListMTX.RUnlock()
+				if ok {
+					if (len(dev.OnConnect.HttpPost) > 0) || (len(dev.OnConnect.HttpGet) > 0) {
+						go makeRequest(dev.OnConnect, map[string]string{
+							"name": dev.Name,
+							"roaming.to": "",
+							"roaming.from": "",
+							"level.to": data.New.Signal,
+							"level.from": "",
+						})
+					}
+				}
+
 			case EVENT_DISCONNECT:
 				log.WithFields(log.Fields{"action": "disconnect", "mac": data.Old.MAC, "name": data.Old.Name, "interface": data.Old.Interface, "hostname": data.Old.Hostname, "comment": data.Old.Comment}).Info("Client disconnect")
+
+				// Get device info
+				devListMTX.RLock()
+				dev, ok := devList[data.New.MAC]
+				devListMTX.RUnlock()
+				if ok {
+					if (len(dev.OnDisconnect.HttpPost) > 0) || (len(dev.OnDisconnect.HttpGet) > 0) {
+						go makeRequest(dev.OnDisconnect, map[string]string{
+							"name": dev.Name,
+							"roaming.to": "",
+							"roaming.from": "",
+							"level.to": "",
+							"level.from": data.Old.Signal,
+						})
+					}
+				}
+
 
 			case EVENT_ROAMING:
 				log.WithFields(log.Fields{"action": "roaming", "mac": data.New.MAC, "name": data.New.Name, "interface-from": data.Old.Interface, "interface-to": data.New.Interface, "level-from": data.Old.Signal, "level-to": data.New.Signal}).Info("Client roaming")
 
+				// Get device info
+				devListMTX.RLock()
+				dev, ok := devList[data.New.MAC]
+				devListMTX.RUnlock()
+				if ok {
+					if (len(dev.OnRoaming.HttpPost) > 0) || (len(dev.OnRoaming.HttpGet) > 0) {
+						go makeRequest(dev.OnRoaming, map[string]string{
+							"name": dev.Name,
+							"roaming.to": data.New.Interface,
+							"roaming.from": data.Old.Interface,
+							"level.from": data.Old.Signal,
+							"level.to": data.New.Signal,
+						})
+					}
+				}
+
+
 			case EVENT_LEVEL:
 				log.WithFields(log.Fields{"action": "level", "mac": data.New.MAC, "name": data.New.Name, "interface": data.New.Interface, "level-from": data.Old.Signal, "level-to": data.New.Signal}).Debug("Signal level change")
+
+				// Get device info
+				devListMTX.RLock()
+				dev, ok := devList[data.New.MAC]
+				devListMTX.RUnlock()
+				if ok {
+					if (len(dev.OnLevel.HttpPost) > 0) || (len(dev.OnLevel.HttpGet) > 0) {
+						go makeRequest(dev.OnLevel, map[string]string{
+							"name": dev.Name,
+							"roaming.to": "",
+							"roaming.from": "",
+							"level.from": data.Old.Signal,
+							"level.to": data.New.Signal,
+						})
+					}
+				}
+
 
 			default:
 
