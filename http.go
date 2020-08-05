@@ -43,22 +43,6 @@ func serveHTTP() {
 	log.WithFields(log.Fields{"listen": *listen}).Fatal("Received an error from HTTP Listener: ", err)
 }
 
-func WSreader(ws *websocket.Conn) {
-	defer ws.Close()
-	ws.SetReadLimit(512)
-
-	if ws.SetReadDeadline(time.Now().Add(pongWait)) != nil {
-		return
-	}
-	ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	for {
-		_, _, err := ws.ReadMessage()
-		if err != nil {
-			break
-		}
-	}
-}
-
 func WSwriter(ws *websocket.Conn) {
 	pingTicker := time.NewTicker(pingPeriod)
 	dataTicker := time.NewTicker(100 * time.Millisecond)
@@ -97,6 +81,22 @@ func WSwriter(ws *websocket.Conn) {
 			} else {
 				broadcastData.RUnlock()
 			}
+		}
+	}
+}
+
+func WSreader(ws *websocket.Conn) {
+	defer ws.Close()
+	ws.SetReadLimit(512)
+
+	if ws.SetReadDeadline(time.Now().Add(pongWait)) != nil {
+		return
+	}
+	ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	for {
+		_, _, err := ws.ReadMessage()
+		if err != nil {
+			break
 		}
 	}
 }
