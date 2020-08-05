@@ -73,7 +73,9 @@ func WSwriter(ws *websocket.Conn) {
 	for {
 		select {
 		case <-pingTicker.C:
-			ws.SetWriteDeadline(time.Now().Add(writeWait))
+			if ws.SetWriteDeadline(time.Now().Add(writeWait)) != nil {
+				return
+			}
 			if err := ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
 				return
 			}
@@ -132,6 +134,10 @@ func makeRequest(event ConfigEvent, params map[string]string) {
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.WithFields(log.Fields{"action": "notify", "method": method, "url": url, "state": "fail"}).Info("Error reading body of HTTP request: ", err)
+		return
+	}
 	// fmt.Printf("Resp body: %s", body)
 
 	log.WithFields(log.Fields{"action": "notify", "method": method, "url": url, "state": "ok", "resp-body-len": len(body)}).Debug("HTTP Notification is sent")

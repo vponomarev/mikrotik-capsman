@@ -147,9 +147,9 @@ func GetDHCPLeases(address, username, password string) (list []LeaseEntry, err e
 	return
 }
 
-func reloadDHCP() {
+func reloadDHCP() { // nolint:deadcode
 	ticker := time.NewTicker(config.DHCP.Interval)
-	for {
+	for { // nolint:gosimple
 		select {
 		case <-ticker.C:
 			l, err := GetDHCPLeases(config.DHCP.Address, config.DHCP.Username, config.DHCP.Password)
