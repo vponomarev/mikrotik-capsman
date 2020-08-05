@@ -87,5 +87,5 @@ func main() {
 	// go reloadDHCP()
 
 	// Run loop : scan Registration-Table
-	RTLoop(*conn, &config)
+	RTLoop(conn, &config)
 }

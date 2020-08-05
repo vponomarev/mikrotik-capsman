@@ -175,7 +175,7 @@ func FindLeaseByMAC(list []LeaseEntry, mac string) (e LeaseEntry, ok bool) {
 	return
 }
 
-func RTLoop(c routeros.Client, conf *Config) {
+func RTLoop(c *routeros.Client, conf *Config) {
 	for {
 		reply, err := c.Run("/caps-man/registration-table/print")
 		if err != nil {
@@ -193,7 +193,7 @@ func RTLoop(c routeros.Client, conf *Config) {
 					log.WithFields(log.Fields{"address": config.Capsman.Address, "username": config.Capsman.Username}).Error("Reconnect error to CapsMan server: ", err)
 					continue
 				}
-				c = *cNew
+				c = cNew
 				log.WithFields(log.Fields{"address": config.Capsman.Address, "username": config.Capsman.Username}).Warn("Reconnected to CapsMan server")
 				break
 			}
@@ -332,7 +332,7 @@ func (b *BroadcastData) reportUpdate(report []ReportEntry) error {
 }
 
 func (b *BroadcastData) EventHandler() {
-	for {
+	for { // nolint:gosimple
 		select {
 		case data := <-b.ReportChan:
 			// fmt.Printf("New event received: %v\n", data)
