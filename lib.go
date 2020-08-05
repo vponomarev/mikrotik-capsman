@@ -24,6 +24,7 @@ const (
 	writeWait = 10 * time.Second
 )
 
+// Event types
 const (
 	EVENT_CONNECT = iota
 	EVENT_ROAMING
@@ -108,7 +109,6 @@ type Config struct {
 	Capsman ConfMikrotik `yaml:"capsman"`
 	DHCP    ConfMikrotik `yaml:"dhcp"`
 	Devices []ConfDevice `yaml:"devices"`
-	sync.RWMutex
 }
 
 // Init BroadcastData entry
@@ -119,7 +119,10 @@ func (b *BroadcastData) Init() {
 
 var broadcastData BroadcastData
 var leaseList LeaseList
+
 var config Config
+var configMTX sync.RWMutex
+
 var devList map[string]ConfDevice
 var devListMTX sync.RWMutex
 

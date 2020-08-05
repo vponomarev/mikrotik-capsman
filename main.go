@@ -60,7 +60,9 @@ func main() {
 	}
 
 	log.WithFields(log.Fields{"config": *configFileName}).Warn("Loaded config file")
+	configMTX.RLock()
 	config = cfg
+	configMTX.RUnlock()
 
 	if len(cfg.DHCP.Address) > 0 {
 		l, err := GetDHCPLeases(config.DHCP.Address, config.DHCP.Username, config.DHCP.Password)
