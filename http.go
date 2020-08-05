@@ -19,7 +19,9 @@ func serveHTTP() {
 			fmt.Fprint(w, "Error parsing template file:", fn, " with error:", err)
 			return
 		}
-		t.Execute(w, map[string]string{"ServerHost": r.Host})
+		if t.Execute(w, map[string]string{"ServerHost": r.Host}) != nil {
+			fmt.Fprint(w, "Internal error: cannot execute template")
+		}
 	})
 
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +46,9 @@ func serveHTTP() {
 func WSreader(ws *websocket.Conn) {
 	defer ws.Close()
 	ws.SetReadLimit(512)
-	ws.SetReadDeadline(time.Now().Add(pongWait))
+	if ws.SetReadDeadline(time.Now().Add(pongWait)) != nil {
+		return
+	}
 	ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		_, _, err := ws.ReadMessage()
