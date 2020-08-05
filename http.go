@@ -46,6 +46,7 @@ func serveHTTP() {
 func WSreader(ws *websocket.Conn) {
 	defer ws.Close()
 	ws.SetReadLimit(512)
+
 	if ws.SetReadDeadline(time.Now().Add(pongWait)) != nil {
 		return
 	}
@@ -87,7 +88,9 @@ func WSwriter(ws *websocket.Conn) {
 				lastUpdate = broadcastData.LastUpdate
 				broadcastData.RUnlock()
 
-				ws.SetWriteDeadline(time.Now().Add(writeWait))
+				if ws.SetWriteDeadline(time.Now().Add(writeWait)) != nil {
+					return
+				}
 				if err := ws.WriteMessage(websocket.TextMessage, []byte(data)); err != nil {
 					return
 				}
