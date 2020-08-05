@@ -74,6 +74,7 @@ func main() {
 		leaseList.List = l
 		leaseList.RUnlock()
 		log.WithFields(log.Fields{"dhcp-addr": config.DHCP.Address, "count": len(l)}).Info("Loaded DHCP Lease list")
+
 	} else {
 		log.WithFields(log.Fields{"dhcp-addr": config.DHCP.Address}).Warn("DHCP support is disabled in configuration")
 	}
@@ -85,8 +86,13 @@ func main() {
 	}
 	log.WithFields(log.Fields{"address": config.Capsman.Address}).Info("Connected to CapsMan server")
 
+	// Run HTTP Server
 	go serveHTTP()
-	// go reloadDHCP()
+
+	// Start DHCP periodical reload
+	if len(cfg.DHCP.Address) > 0 {
+		go reloadDHCP()
+	}
 
 	// Run loop : scan Registration-Table
 	RTLoop(conn, &config)

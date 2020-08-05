@@ -150,14 +150,15 @@ func GetDHCPLeases(address, username, password string) (list []LeaseEntry, err e
 	return
 }
 
-func reloadDHCP() { // nolint:deadcode
+func reloadDHCP() {
 	ticker := time.NewTicker(config.DHCP.Interval)
 	for { // nolint:gosimple
 		select {
 		case <-ticker.C:
 			l, err := GetDHCPLeases(config.DHCP.Address, config.DHCP.Username, config.DHCP.Password)
 			if err != nil {
-				log.Fatal("Cannot connect to DHCP Server for reload: ", err)
+				log.WithFields(log.Fields{"dhcp-addr": config.DHCP.Address}).Error("Error reloading DHCP Leases: ", err)
+				return
 			} else {
 				leaseList.RLock()
 				leaseList.List = l

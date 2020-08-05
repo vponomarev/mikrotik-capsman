@@ -138,8 +138,5 @@ func makeRequest(event ConfigEvent, params map[string]string) {
 		log.WithFields(log.Fields{"action": "notify", "method": method, "url": url, "state": "fail"}).Info("Error reading body of HTTP request: ", err)
 		return
 	}
-	// fmt.Printf("Resp body: %s", body)
-
 	log.WithFields(log.Fields{"action": "notify", "method": method, "url": url, "state": "ok", "resp-body-len": len(body)}).Debug("HTTP Notification is sent")
-
 }
