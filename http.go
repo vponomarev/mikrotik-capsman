@@ -89,7 +89,7 @@ func WSreader(ws *websocket.Conn) {
 	defer ws.Close()
 	ws.SetReadLimit(512)
 
-	if ws.SetReadDeadline(time.Now().Add(pongWait)) != nil {
+	if err := ws.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
 		return
 	}
 	ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
