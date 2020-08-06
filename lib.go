@@ -365,6 +365,7 @@ func (b *BroadcastData) EventHandler() {
 					if (len(dev.OnConnect.HttpPost) > 0) || (len(dev.OnConnect.HttpGet) > 0) {
 						go makeRequest(dev.OnConnect, map[string]string{
 							"name":         dev.Name,
+							"mac":          data.New.MAC,
 							"roaming.to":   "",
 							"roaming.from": "",
 							"level.to":     data.New.Signal,
@@ -384,6 +385,7 @@ func (b *BroadcastData) EventHandler() {
 					if (len(dev.OnDisconnect.HttpPost) > 0) || (len(dev.OnDisconnect.HttpGet) > 0) {
 						go makeRequest(dev.OnDisconnect, map[string]string{
 							"name":         dev.Name,
+							"mac":          data.Old.MAC,
 							"roaming.to":   "",
 							"roaming.from": "",
 							"level.to":     "",
@@ -403,6 +405,7 @@ func (b *BroadcastData) EventHandler() {
 					if (len(dev.OnRoaming.HttpPost) > 0) || (len(dev.OnRoaming.HttpGet) > 0) {
 						go makeRequest(dev.OnRoaming, map[string]string{
 							"name":         dev.Name,
+							"mac":          data.New.MAC,
 							"roaming.to":   data.New.Interface,
 							"roaming.from": data.Old.Interface,
 							"level.from":   data.Old.Signal,
@@ -422,6 +425,7 @@ func (b *BroadcastData) EventHandler() {
 					if (len(dev.OnLevel.HttpPost) > 0) || (len(dev.OnLevel.HttpGet) > 0) {
 						go makeRequest(dev.OnLevel, map[string]string{
 							"name":         dev.Name,
+							"mac":          data.Old.MAC,
 							"roaming.to":   "",
 							"roaming.from": "",
 							"level.from":   data.Old.Signal,

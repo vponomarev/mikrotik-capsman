@@ -1,5 +1,5 @@
 # Mikrotik-CapsMan
-Web UI for Mikrotik CapsMan interface.
+Web UI for Mikrotik CapsMan/WiFi interface.
 
 UI generates a dedicated and periodically updated WEB page with list of WiFi clients, that are connected to CapsMan. List is filled with extra information from Mikrotik DHCP Server.
 
@@ -12,15 +12,43 @@ UI contains:
 - Hostname (from DHCP)
 - Comment (from DHCP)
 
-Supported configuration options:
-- `-address` - IP address and port of CapsMan server (default: `192.168.1.1:8728`)
-- `-username` - Login for CapsMan server (default: `admin`)
-- `-password` - Password for CaspMan server(default: none)
-- `-dhcp-address` - IP address and port of DHCP server (default: `192.168.1.1:8728`)
-- `-dhcp-username` - Login for DHCP server (default: `admin`)
-- `-password` - Password for DHCP server(default: none)
-- `-listen` - IP address and port for WEB UI server (default: `0.0.0.0:8080`)
-- `-interval` - CapsMan server polling interval (default: `3 second`)
+Supported configuration params:
+- `-config` - Name of configuration file (default: `config.yml`, example: `-config config-custom.yml`)
+
+Supported parameters in configuration file:
+- Router configuration
+  - `mode` - operation mode (CapsMan / WiFi)
+  - `address` - IP address and port of API interface (normally `8728`)
+  - `username` - Login for API connection
+  - `password` - Password for API connection
+  - `interval` - Polling interval (examples: `5s`, `1m`, ...)
+- DHCP Server configuration (only Mikrotik DHCP server is supported), optional
+  - `address` - IP address and port of API interface (normally `8728`)
+  - `username` - Login for API connection
+  - `password` - Password for API connection
+  - `interval` - Polling interval (examples: `5s`, `1m`, ...)
+- Device list (personal configuration for each device)
+  - `name` - Name, that will be displayed in interface
+  - `mac` - MAC address of this device
+  - `on.connect` - Action for connect event
+  - `on.disconnect` - Action for disconnect event
+  - `on.roaming` - Action for roaming between AP's (for CapsMan mode)
+  - `on.level` - Action for signal level change
+
+Each `on.*` event have the following configuration fields:
+- `http.post` - URL for HTTP Post request with template support
+- `http.get` - URL for HTTP Get request with templates (will be used if there is no `http.post` line)
+- `http.post.content` - Content for HTTP Post request
+- `http.header` - List of HTTP headers, that should be added into request (can be used for authentification/configuration of content-type and so on)
+
+Supported template variables for `http.post`, `http.get` and `http.post.content` fields:
+- `name` - Name of device (from configuration)
+- `mac` - MAC address of device
+- `roaming.to` - During roaming, name of New AP
+- `roaming.from` - During roaming, name of OLD AP
+- `level.to` - During level change, value of new signal level
+- `level.from` - During level change, value of old signal level
+  
 
 WEB UI is published at: http://`listen`/
 
