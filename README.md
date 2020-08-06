@@ -1,5 +1,6 @@
 # Mikrotik-CapsMan
-Web UI for Mikrotik CapsMan/WiFi interface.
+* Web UI for Mikrotik CapsMan/WiFi interface
+* HTTP Notification engine for CapsMan/WiFi client changes 
 
 ![UI Example](https://github.com/vponomarev/mikrotik-capsman/raw/master/doc/mikrotik-capsman-ui-sample-processed.PNG)
 
