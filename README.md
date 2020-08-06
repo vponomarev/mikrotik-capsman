@@ -1,6 +1,8 @@
 # Mikrotik-CapsMan
 Web UI for Mikrotik CapsMan/WiFi interface.
 
+![UI Example](https://github.com/vponomarev/mikrotik-capsman/raw/master/doc/mikrotik-capsman-ui-sample-processed.PNG)
+
 UI generates a dedicated and periodically updated WEB page with list of WiFi clients, that are connected to CapsMan. List is filled with extra information from Mikrotik DHCP Server.
 
 UI contains:
