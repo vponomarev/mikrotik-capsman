@@ -51,7 +51,7 @@ func main() {
 	}
 
 	// Validate reload interval duration
-	if cfg.Capsman.Interval < (2 * time.Second) {
+	if cfg.Router.Interval < (2 * time.Second) {
 		log.WithFields(log.Fields{"config": *configFileName}).Fatal("capsman.interval is too short, minimum value is 2 sec")
 	}
 
@@ -79,12 +79,12 @@ func main() {
 		log.WithFields(log.Fields{"dhcp-addr": config.DHCP.Address}).Warn("DHCP support is disabled in configuration")
 	}
 
-	conn, err := routeros.Dial(config.Capsman.Address, config.Capsman.Username, config.Capsman.Password)
+	conn, err := routeros.Dial(config.Router.Address, config.Router.Username, config.Router.Password)
 	if err != nil {
-		log.WithFields(log.Fields{"address": config.Capsman.Address, "username": config.Capsman.Username}).Fatal("Cannot connect to CapsMan node")
+		log.WithFields(log.Fields{"address": config.Router.Address, "username": config.Router.Username}).Fatal("Cannot connect to CapsMan node")
 		return
 	}
-	log.WithFields(log.Fields{"address": config.Capsman.Address}).Info("Connected to CapsMan server")
+	log.WithFields(log.Fields{"address": config.Router.Address}).Info("Connected to CapsMan server")
 
 	// Run HTTP Server
 	go serveHTTP()

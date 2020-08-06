@@ -3,7 +3,9 @@ log:
   level: INFO
 
 # Mikrotik CapsMan connection parameters
-capsman:
+router:
+  # mode: "wifi"
+  mode: "capsman"
   address: "192.168.1.1:8728"
   username: "admin"
   password: ""

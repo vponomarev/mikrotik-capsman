@@ -82,6 +82,7 @@ type ConfMikrotik struct {
 	Username string        `yaml:"username"`
 	Password string        `yaml:"password"`
 	Interval time.Duration `yaml:"interval"`
+	Mode     string        `yaml:"mode"`
 }
 
 type ConfDevice struct {
@@ -106,7 +107,7 @@ type LogInfo struct {
 
 type Config struct {
 	Log     LogInfo      `yaml:"log"`
-	Capsman ConfMikrotik `yaml:"capsman"`
+	Router  ConfMikrotik `yaml:"router"`
 	DHCP    ConfMikrotik `yaml:"dhcp"`
 	Devices []ConfDevice `yaml:"devices"`
 }
@@ -181,9 +182,14 @@ func FindLeaseByMAC(list []LeaseEntry, mac string) (e LeaseEntry, ok bool) {
 
 func RTLoop(c *routeros.Client, conf *Config) {
 	for {
-		reply, err := c.Run("/caps-man/registration-table/print")
+		cmd := "/caps-man/registration-table/print"
+		if strings.ToLower(config.Router.Mode) == "wifi" {
+			cmd = "/interface/wireless/registration-table/print"
+		}
+
+		reply, err := c.Run(cmd)
 		if err != nil {
-			log.WithFields(log.Fields{"address": config.Capsman.Address, "username": config.Capsman.Username}).Error("Error during request to CapsMan server: ", err)
+			log.WithFields(log.Fields{"address": config.Router.Address, "username": config.Router.Username}).Error("Error during request to CapsMan server: ", err)
 
 			// Try to close connection
 			c.Close()
@@ -192,13 +198,13 @@ func RTLoop(c *routeros.Client, conf *Config) {
 			for {
 				// Sleep for 5 sec
 				time.Sleep(5 * time.Second)
-				cNew, err := routeros.Dial(config.Capsman.Address, config.Capsman.Username, config.Capsman.Password)
+				cNew, err := routeros.Dial(config.Router.Address, config.Router.Username, config.Router.Password)
 				if err != nil {
-					log.WithFields(log.Fields{"address": config.Capsman.Address, "username": config.Capsman.Username}).Error("Reconnect error to CapsMan server: ", err)
+					log.WithFields(log.Fields{"address": config.Router.Address, "username": config.Router.Username}).Error("Reconnect error to CapsMan server: ", err)
 					continue
 				}
 				c = cNew
-				log.WithFields(log.Fields{"address": config.Capsman.Address, "username": config.Capsman.Username}).Warn("Reconnected to CapsMan server")
+				log.WithFields(log.Fields{"address": config.Router.Address, "username": config.Router.Username}).Warn("Reconnected to CapsMan server")
 				break
 			}
 			continue
@@ -224,6 +230,13 @@ func RTLoop(c *routeros.Client, conf *Config) {
 				Signal:    re.Map["rx-signal"],
 				Hostname:  n,
 				Comment:   c,
+			}
+
+			if strings.ToLower(config.Router.Mode) == "wifi" {
+				rec.Signal = re.Map["signal-strength"]
+				if i := strings.Index(rec.Signal, "@"); i > 0 {
+					rec.Signal = rec.Signal[0:i]
+				}
 			}
 			devListMTX.RUnlock()
 			report = append(report, rec)
