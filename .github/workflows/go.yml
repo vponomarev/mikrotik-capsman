@@ -40,10 +40,10 @@ jobs:
         GOARCH=arm go build -o out_arm32/mikrotik-capsman -v .
         mkdir out_win32
         cp config.yml out_win32/
-        GOARCH=386 GOOS=windows go build -o out_win32/mikrotik-capsman -v .
+        GOARCH=386 GOOS=windows go build -o out_win32/mikrotik-capsman.exe -v .
         mkdir out_win_x86-64
         cp config.yml out_win_x86-64/
-        GOARCH=amd64 GOOS=windows go build -o out_win_x86/mikrotik-capsman -v .
+        GOARCH=amd64 GOOS=windows go build -o out_win_x86-64/mikrotik-capsman.exe -v .
 
       
     - name: Upload Linux binary x86-64
