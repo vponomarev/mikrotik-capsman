@@ -49,17 +49,17 @@ jobs:
     - name: Upload Linux binary x86-64
       uses: actions/upload-artifact@master
       with:
-        name: linux_x86-64
+        name: mikrotik-capsman_linux_x86-64
         path: out_x86-64
 
     - name: Upload Linux binary arm32
       uses: actions/upload-artifact@master
       with:
-        name: linux_arm32
+        name: mikrotik-capsman_linux_arm32
         path: out_arm32
 
     - name: Upload Windows binary
       uses: actions/upload-artifact@master
       with:
-        name: windows
+        name: mikrotik-capsman_windows
         path: out_win
