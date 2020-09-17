@@ -38,17 +38,36 @@ jobs:
         mkdir out_arm32
         cp config.yml out_arm32/
         GOARCH=arm go build -o out_arm32/mikrotik-capsman -v .
+        mkdir out_win32
+        cp config.yml out_win32/
+        GOARCH=386 GOOS=windows go build -o out_win32/mikrotik-capsman -v .
+        mkdir out_win_x86-64
+        cp config.yml out_win_x86-64/
+        GOARCH=amd64 GOOS=windows go build -o out_win_x86/mikrotik-capsman -v .
+
       
-    - name: Upload binary x86-64
+    - name: Upload Linux binary x86-64
       uses: actions/upload-artifact@master
       with:
         name: linux_x86-64
         path: out_x86-64
 
-    - name: Upload binary arm32
+    - name: Upload Linux binary arm32
       uses: actions/upload-artifact@master
       with:
         name: linux_arm32
         path: out_arm32
+
+    - name: Upload Windows binary x86-64
+      uses: actions/upload-artifact@master
+      with:
+        name: windows_x86-64
+        path: out_win_x86-64
+
+    - name: Upload Windows binary 386
+      uses: actions/upload-artifact@master
+      with:
+        name: windows_386
+        path: out_win32
 
 
